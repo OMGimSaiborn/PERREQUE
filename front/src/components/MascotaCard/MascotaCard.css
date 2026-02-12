@@ -1,0 +1,100 @@
+.mascota-card {
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  text-decoration: none;
+  color: inherit;
+}
+
+.mascota-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.mascota-card-image {
+  position: relative;
+  width: 100%;
+  height: 250px;
+  overflow: hidden;
+  background-color: #f0f0f0;
+}
+
+.mascota-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mascota-card-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f7c59f 0%, #efefd0 100%);
+}
+
+.placeholder-icon {
+  font-size: 4rem;
+  opacity: 0.5;
+}
+
+.mascota-card-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: white;
+}
+
+.mascota-card-badge.adopcion {
+  background-color: #004e89;
+}
+
+.mascota-card-badge.perdida {
+  background-color: #ff9800;
+}
+
+.mascota-card-content {
+  padding: 1rem;
+}
+
+.mascota-card-nombre {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 0.75rem;
+  color: #004e89;
+}
+
+.mascota-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.info-item {
+  font-size: 0.9rem;
+  color: #1a659e;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.info-label {
+  font-weight: 600;
+  color: #004e89;
+}
+
+@media (max-width: 768px) {
+  .mascota-card-image {
+    height: 200px;
+  }
+}
+
