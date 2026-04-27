@@ -1,8 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import './Home.css';
 
 const Home = () => {
+  const { user } = useAuth();
+  
   return (
     <div className="home">
       <section className="hero">
@@ -54,15 +57,18 @@ const Home = () => {
         </div>
       </section>
 
-      <section className="cta-section">
-        <div className="cta-content">
-          <h2>¿Tienes una mascota para dar en adopción?</h2>
-          <p>O tal vez encontraste una mascota perdida. ¡Ayúdanos a conectar con las personas correctas!</p>
-          <Link to="/publicar" className="btn btn-primary btn-large">
-            Publicar Anuncio
-          </Link>
-        </div>
-      </section>
+      {/* Solo mostrar sección de publicar si el usuario es administrador */}
+      {user?.isAdmin && (
+        <section className="cta-section">
+          <div className="cta-content">
+            <h2>¿Tienes una mascota para dar en adopción?</h2>
+            <p>O tal vez encontraste una mascota perdida. ¡Ayúdanos a conectar con las personas correctas!</p>
+            <Link to="/publicar" className="btn btn-primary btn-large">
+              Publicar Anuncio
+            </Link>
+          </div>
+        </section>
+      )}
     </div>
   );
 };

@@ -1,14 +1,21 @@
 package com.example.pets.petproject.domain.core;
 
+import com.example.pets.petproject.domain.enums.PetStatus;
 import com.example.pets.petproject.domain.mapper.PetsMapper;
+import com.example.pets.petproject.domain.mapper.UserMapper;
 import com.example.pets.petproject.domain.model.CreatedPetsDTO;
 import com.example.pets.petproject.domain.model.PetsDTO;
+import com.example.pets.petproject.domain.model.UserDTO;
 import com.example.pets.petproject.domain.port.PetsRepositoryDB;
 import com.example.pets.petproject.domain.service.PetsService;
 import com.example.pets.petproject.infraestructure.entity.PetsEntity;
+import com.example.pets.petproject.infraestructure.entity.UserEntity;
 import com.example.pets.petproject.utils.Constants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,11 +32,14 @@ public class PetsServiceImpl implements PetsService {
     }
 
     @Override
-    public List<PetsDTO> getAllPets() {
-        return repository.findAll()
-                .stream()
-                .map(PetsMapper::toDto)
-                .toList();
+    public Page<PetsDTO> getAllPets(int page, int size, PetStatus status) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        if (status != null) {
+            return repository.findByStatus(status, pageable).map(PetsMapper::toDto);
+        }
+
+        return repository.findAll(pageable).map(PetsMapper::toDto);
     }
 
     @Override
@@ -58,6 +68,24 @@ public class PetsServiceImpl implements PetsService {
         } catch(Exception e){
             throw new RuntimeException(Constants.PET_NOT_FOUND);
         }
+    }
+
+    @Override
+    public PetsDTO updatePet(Integer id, PetsDTO dto) {
+        PetsEntity existing = repository.findById(id).orElseThrow(
+                () -> new RuntimeException("Mascota no encontrada")
+        );
+
+        existing.setName(dto.name());
+        existing.setAge(dto.age());
+        existing.setColor(dto.color());
+        existing.setBreed(dto.breed());
+        existing.setDescription(dto.description());
+        existing.setLocation(dto.location());
+        existing.setStatus(dto.status());
+
+        PetsEntity updated = repository.save(existing);
+        return PetsMapper.toDto(updated);
     }
 
 

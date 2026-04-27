@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getPetDetails, mapBackendToFrontend } from '../../services/petsService';
+import { useAuth } from '../../context/AuthContext';
+import { getPetDetails, deletePet, mapBackendToFrontend } from '../../services/petsService';
 import './DetalleMascota.css';
 
 const DetalleMascota = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   const [mascota, setMascota] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Cargar detalles de la mascota al montar el componente
   useEffect(() => {
@@ -34,6 +38,21 @@ const DetalleMascota = () => {
       loadPetDetails();
     }
   }, [id]);
+
+  const handleDeletePet = async () => {
+    setDeleting(true);
+    try {
+      await deletePet(id);
+      // Redirigir al home después de eliminar
+      navigate('/home');
+    } catch (err) {
+      setError(err.message || 'Error al eliminar la mascota');
+      setShowDeleteModal(false);
+      console.error('Error al eliminar mascota:', err);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -128,17 +147,75 @@ const DetalleMascota = () => {
 
           <div className="detalle-contacto">
             <h3>Información</h3>
-            <p className="contacto-note">
-              {mascota.estado === 'adopcion' 
-                ? 'Si estás interesado en adoptar a esta mascota, puedes contactar a través de los canales oficiales de Perreque.'
-                : 'Si has visto a esta mascota, por favor reporta el avistamiento a través de los canales oficiales de Perreque.'}
-            </p>
-            <button className="btn btn-primary btn-contacto">
-              {mascota.estado === 'adopcion' ? 'Contactar para Adopción' : 'Reportar Avistamiento'}
-            </button>
+            {user?.isAdmin ? (
+              <>
+                <p className="contacto-note">
+                  Como administrador, puedes editar o eliminar la información de esta mascota.
+                </p>
+                <div className="admin-actions">
+                  <button 
+                    className="btn btn-primary btn-action"
+                    onClick={() => navigate(`/mascota/${id}/editar`)}
+                  >
+                    Editar Información
+                  </button>
+                  <button 
+                    className="btn btn-danger btn-action"
+                    onClick={() => setShowDeleteModal(true)}
+                  >
+                    Eliminar Mascota
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="contacto-note">
+                  {mascota.estado === 'adopcion' 
+                    ? 'Si estás interesado en adoptar a esta mascota, puedes contactar a través de los canales oficiales de Perreque cuando estén disponibles.'
+                    : 'Si has visto a esta mascota, por favor reporta el avistamiento a través de los canales oficiales de Perreque cuando estén disponibles.'}
+                </p>
+                {/* Los usuarios normales solo pueden ver, sin opciones de contacto por ahora */}
+              </>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Modal de confirmación para eliminar mascota */}
+      {showDeleteModal && (
+        <div className="modal-overlay" onClick={() => !deleting && setShowDeleteModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Eliminar Mascota</h2>
+            </div>
+            <div className="modal-body">
+              <p>
+                ¿Estás seguro de que deseas eliminar a <strong>{mascota?.nombre}</strong>? 
+                Esta acción no se puede deshacer.
+              </p>
+              <p className="modal-warning">
+                <strong>⚠️ Esta acción es permanente</strong>
+              </p>
+            </div>
+            <div className="modal-actions">
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleting}
+              >
+                Cancelar
+              </button>
+              <button
+                className="btn btn-danger"
+                onClick={handleDeletePet}
+                disabled={deleting}
+              >
+                {deleting ? 'Eliminando...' : 'Sí, Eliminar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

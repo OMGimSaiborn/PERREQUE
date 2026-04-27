@@ -1,0 +1,12 @@
+/* Estilos para ProtectedAdminRoute */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;
+}
+
+.loading-spinner {
+  font-size: 1.2rem;
+  color: #1a659e;
+}

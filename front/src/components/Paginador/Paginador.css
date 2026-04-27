@@ -1,0 +1,95 @@
+.paginador {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  margin-top: 1.5rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.paginador-info {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.paginador-range {
+  color: #1a659e;
+  font-size: 0.95rem;
+}
+
+.paginador-size {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: #004e89;
+}
+
+.paginador-size select {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #f7c59f;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  background: white;
+  cursor: pointer;
+}
+
+.paginador-size select:focus {
+  outline: none;
+  border-color: #ff6b35;
+}
+
+.paginador-nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.paginador-page {
+  font-size: 0.95rem;
+  color: #004e89;
+  font-weight: 500;
+}
+
+.paginador-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #f7c59f;
+  border-radius: 4px;
+  background: white;
+  color: #004e89;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.paginador-btn:hover:not(:disabled) {
+  background-color: #fef5ee;
+  border-color: #ff6b35;
+  color: #ff6b35;
+}
+
+.paginador-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .paginador {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .paginador-info {
+    justify-content: center;
+  }
+
+  .paginador-nav {
+    justify-content: center;
+  }
+}
