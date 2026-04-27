@@ -4,13 +4,16 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Header from './components/Header/Header';
 import Footer from './components/Footer/Footer';
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
+import ProtectedAdminRoute from './components/ProtectedAdminRoute/ProtectedAdminRoute';
 import PublicRoute from './components/PublicRoute/PublicRoute';
 import Home from './pages/Home/Home';
 import Adopcion from './pages/Adopcion/Adopcion';
 import MascotasPerdidas from './pages/MascotasPerdidas/MascotasPerdidas';
 import DetalleMascota from './pages/DetalleMascota/DetalleMascota';
+import EditarMascota from './pages/EditarMascota/EditarMascota';
 import PublicarMascota from './pages/PublicarMascota/PublicarMascota';
 import Perfil from './pages/Perfil/Perfil';
+import CrearUsuario from './pages/CrearUsuario/CrearUsuario';
 import Login from './pages/Login/Login';
 import Registro from './pages/Registro/Registro';
 import './App.css';
@@ -94,11 +97,19 @@ function App() {
                 } 
               />
               <Route 
+                path="/mascota/:id/editar" 
+                element={
+                  <ProtectedAdminRoute>
+                    <EditarMascota />
+                  </ProtectedAdminRoute>
+                } 
+              />
+              <Route 
                 path="/publicar" 
                 element={
-                  <ProtectedRoute>
+                  <ProtectedAdminRoute>
                     <PublicarMascota />
-                  </ProtectedRoute>
+                  </ProtectedAdminRoute>
                 } 
               />
               <Route 
@@ -107,6 +118,14 @@ function App() {
                   <ProtectedRoute>
                     <Perfil />
                   </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/crear-usuario" 
+                element={
+                  <ProtectedAdminRoute>
+                    <CrearUsuario />
+                  </ProtectedAdminRoute>
                 } 
               />
               

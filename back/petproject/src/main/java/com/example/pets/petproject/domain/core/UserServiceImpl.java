@@ -42,7 +42,9 @@ public class UserServiceImpl implements UserService {
                 .hashToString(12, dto.password().toCharArray());
 
         entity.setPassword(hashed);
-        entity.setRole(UserRole.USER);
+
+        UserRole roleToAssign = (dto.role() != null) ? dto.role() : UserRole.USER;
+        entity.setRole(roleToAssign);
 
         UserEntity saved = repository.save(entity);
         return UserMapper.toDto(saved);

@@ -1,11 +1,13 @@
 package com.example.pets.petproject.application;
 
+import com.example.pets.petproject.domain.enums.PetStatus;
 import com.example.pets.petproject.domain.model.CreatedPetsDTO;
 import com.example.pets.petproject.domain.model.PetsDTO;
+import com.example.pets.petproject.domain.model.UserDTO;
 import com.example.pets.petproject.domain.port.PetsRepositoryDB;
 import com.example.pets.petproject.domain.service.PetsService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.parameters.P;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,8 +21,12 @@ public class PetsController {
     private PetsService petsService;
 
     @GetMapping
-    public List<PetsDTO> getAllPets() {
-        return petsService.getAllPets();
+    public Page<PetsDTO> getAllPets(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) PetStatus status
+    ) {
+        return petsService.getAllPets(page, size, status);
     }
 
     @GetMapping("/details/{id}")
@@ -31,6 +37,11 @@ public class PetsController {
     @PostMapping
     public PetsDTO createPet(@RequestBody CreatedPetsDTO dto) {
         return petsService.createPet(dto);
+    }
+
+    @PutMapping("/updatePet/{id}")
+    public PetsDTO updateData(@PathVariable Integer id, @RequestBody PetsDTO dto) {
+        return petsService.updatePet(id, dto);
     }
 
     @DeleteMapping("/{id}")

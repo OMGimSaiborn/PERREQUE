@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import './Registro.css';
+import './CrearUsuario.css';
 
-const Registro = () => {
+const CrearUsuario = () => {
   const navigate = useNavigate();
-  const { register, user } = useAuth();
+  const { register } = useAuth();
   
   const [formData, setFormData] = useState({
     username: '',
@@ -19,6 +19,7 @@ const Registro = () => {
   const [errores, setErrores] = useState({});
   const [loading, setLoading] = useState(false);
   const [errorGeneral, setErrorGeneral] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -35,6 +36,9 @@ const Registro = () => {
     }
     if (errorGeneral) {
       setErrorGeneral('');
+    }
+    if (successMessage) {
+      setSuccessMessage('');
     }
   };
 
@@ -68,7 +72,7 @@ const Registro = () => {
     }
 
     if (!formData.confirmPassword) {
-      nuevosErrores.confirmPassword = 'Confirma tu contraseña';
+      nuevosErrores.confirmPassword = 'Confirma la contraseña';
     } else if (formData.password !== formData.confirmPassword) {
       nuevosErrores.confirmPassword = 'Las contraseñas no coinciden';
     }
@@ -80,6 +84,7 @@ const Registro = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorGeneral('');
+    setSuccessMessage('');
 
     if (!validateForm()) {
       return;
@@ -87,34 +92,49 @@ const Registro = () => {
 
     setLoading(true);
 
-    // TODO: Esta función register() está definida en AuthContext
-    // Cuando integres con el backend, la función register en AuthContext
-    // hará la llamada real al endpoint POST /api/auth/register
     const result = await register(formData);
 
     setLoading(false);
 
     if (result.success) {
-      // Redirigir al usuario después del registro exitoso a la pantalla principal
-      navigate('/home');
+      setSuccessMessage(`Usuario ${formData.role === 'ADMIN' ? 'administrador' : 'normal'} creado exitosamente`);
+      // Limpiar el formulario después de 2 segundos
+      setTimeout(() => {
+        setFormData({
+          username: '',
+          email: '',
+          phone: '',
+          password: '',
+          confirmPassword: '',
+          role: 'USER',
+        });
+        setSuccessMessage('');
+      }, 3000);
     } else {
-      setErrorGeneral(result.error || 'Error al registrar usuario. Por favor, intenta de nuevo.');
+      setErrorGeneral(result.error || 'Error al crear usuario. Por favor, intenta de nuevo.');
     }
   };
 
   return (
-    <div className="registro-page">
-      <div className="registro-container">
-        <div className="registro-header">
-          <h1>Crear Cuenta</h1>
-          <p>Únete a Perreque y ayuda a las mascotas</p>
+    <div className="crear-usuario-page">
+      <div className="crear-usuario-container">
+        <div className="crear-usuario-header">
+          <h1>Crear Nuevo Usuario</h1>
+          <p>Como administrador, puedes crear nuevos usuarios y definir su rol</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="registro-form">
+        <form onSubmit={handleSubmit} className="crear-usuario-form">
           {errorGeneral && (
             <div className="error-alert">
               <span className="error-icon">⚠️</span>
               <span>{errorGeneral}</span>
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="success-alert">
+              <span className="success-icon">✓</span>
+              <span>{successMessage}</span>
             </div>
           )}
 
@@ -195,56 +215,40 @@ const Registro = () => {
             </div>
           </div>
 
-          {/* Solo mostrar selector de rol si el usuario actual es administrador */}
-          {user && user.isAdmin && (
-            <div className="form-group">
-              <label htmlFor="role">Tipo de Usuario</label>
-              <select
-                id="role"
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                disabled={loading}
-                className="select-role"
-              >
-                <option value="USER">Usuario</option>
-                <option value="ADMIN">Administrador</option>
-              </select>
-              <small className="role-hint">Solo los administradores pueden crear otros administradores</small>
-            </div>
-          )}
-
-          <div className="form-terms">
-            <label className="checkbox-label">
-              <input type="checkbox" required />
-              <span>
-                Acepto los{' '}
-                <Link to="/terminos" className="link-terms">
-                  términos y condiciones
-                </Link>{' '}
-                y la{' '}
-                <Link to="/privacidad" className="link-terms">
-                  política de privacidad
-                </Link>
-              </span>
-            </label>
+          <div className="form-group">
+            <label htmlFor="role">Tipo de Usuario *</label>
+            <select
+              id="role"
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              disabled={loading}
+              className="select-role"
+            >
+              <option value="USER">Usuario Normal</option>
+              <option value="ADMIN">Administrador</option>
+            </select>
+            <small className="role-hint">
+              Selecciona el rol que tendrá el nuevo usuario en el sistema
+            </small>
           </div>
 
-          <button 
-            type="submit" 
-            className="btn btn-primary btn-submit"
-            disabled={loading}
-          >
-            {loading ? 'Creando cuenta...' : 'Crear Cuenta'}
-          </button>
-
-          <div className="form-footer">
-            <p>
-              ¿Ya tienes una cuenta?{' '}
-              <Link to="/login" className="link-login">
-                Inicia sesión aquí
-              </Link>
-            </p>
+          <div className="form-actions">
+            <button 
+              type="button"
+              onClick={() => navigate('/home')}
+              className="btn btn-secondary"
+              disabled={loading}
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              className="btn btn-primary btn-submit"
+              disabled={loading}
+            >
+              {loading ? 'Creando usuario...' : 'Crear Usuario'}
+            </button>
           </div>
         </form>
       </div>
@@ -252,4 +256,4 @@ const Registro = () => {
   );
 };
 
-export default Registro;
+export default CrearUsuario;

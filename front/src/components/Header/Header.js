@@ -49,12 +49,15 @@ const Header = () => {
               >
                 Mascotas Perdidas
               </Link>
-              <Link 
-                to="/publicar" 
-                className="nav-link nav-link-primary"
-              >
-                Publicar Anuncio
-              </Link>
+              {/* Solo mostrar "Publicar Anuncio" si el usuario es administrador */}
+              {user?.isAdmin && (
+                <Link 
+                  to="/publicar" 
+                  className={`nav-link nav-link-primary ${location.pathname === '/publicar' ? 'active' : ''}`}
+                >
+                  Publicar Anuncio
+                </Link>
+              )}
             </>
           )}
 
@@ -88,6 +91,19 @@ const Header = () => {
                   >
                     Mis Anuncios
                   </Link>
+                  {/* Solo mostrar opción de crear usuario si es administrador */}
+                  {user?.isAdmin && (
+                    <>
+                      <div className="dropdown-divider"></div>
+                      <Link 
+                        to="/crear-usuario" 
+                        className="dropdown-item"
+                        onClick={() => setShowMenu(false)}
+                      >
+                        Crear Usuario
+                      </Link>
+                    </>
+                  )}
                   <div className="dropdown-divider"></div>
                   <button 
                     className="dropdown-item dropdown-item-danger"

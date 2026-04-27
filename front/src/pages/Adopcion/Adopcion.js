@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import MascotaCard from '../../components/MascotaCard/MascotaCard';
-import { getAllPets, mapBackendToFrontend } from '../../services/petsService';
+import Paginador from '../../components/Paginador/Paginador';
+import { getPetsForAdopcion, mapBackendToFrontend } from '../../services/petsService';
 import './Adopcion.css';
+
+const SIZE_FETCH_ALL = 9999;
 
 const Adopcion = () => {
   const [mascotas, setMascotas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(9);
 
   const [filtros, setFiltros] = useState({
     tipo: '',
@@ -14,28 +19,22 @@ const Adopcion = () => {
     busqueda: ''
   });
 
-  // Cargar mascotas al montar el componente
-  useEffect(() => {
-    const loadPets = async () => {
-      try {
-        setLoading(true);
-        setError('');
-        const petsData = await getAllPets();
-        
-        // Filtrar solo mascotas disponibles (AVAILABLE) y mapear al formato del frontend
-        const availablePets = petsData
-          .filter(pet => pet.status === 'AVAILABLE')
-          .map(pet => mapBackendToFrontend(pet));
-        
-        setMascotas(availablePets);
-      } catch (err) {
-        setError(err.message || 'Error al cargar las mascotas');
-        console.error('Error al cargar mascotas:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const loadPets = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const response = await getPetsForAdopcion(SIZE_FETCH_ALL);
+      const content = Array.isArray(response) ? response : (response.content || []);
+      setMascotas(content.map(pet => mapBackendToFrontend(pet)));
+    } catch (err) {
+      setError(err.message || 'Error al cargar las mascotas');
+      console.error('Error al cargar mascotas:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadPets();
   }, []);
 
@@ -48,6 +47,15 @@ const Adopcion = () => {
 
     return coincideTipo && coincideUbicacion && coincideBusqueda;
   });
+
+  const totalElements = mascotasFiltradas.length;
+  const totalPages = Math.max(1, Math.ceil(totalElements / size));
+  const pageClamped = Math.min(page, totalPages - 1);
+  const mascotasPagina = mascotasFiltradas.slice(pageClamped * size, pageClamped * size + size);
+
+  useEffect(() => {
+    if (page >= totalPages && totalPages > 0) setPage(0);
+  }, [totalPages]);
 
   return (
     <div className="adopcion-page">
@@ -97,18 +105,33 @@ const Adopcion = () => {
           <span>{error}</span>
         </div>
       ) : (
-        <div className="mascotas-grid">
-          {mascotasFiltradas.length > 0 ? (
-            mascotasFiltradas.map(mascota => (
-              <MascotaCard key={mascota.id} mascota={mascota} />
-            ))
-          ) : (
-            <div className="no-results">
-              <p>No se encontraron mascotas con esos filtros.</p>
-              <p>Intenta ajustar tus criterios de búsqueda.</p>
-            </div>
+        <>
+          <div className="mascotas-grid">
+            {mascotasPagina.length > 0 ? (
+              mascotasPagina.map(mascota => (
+                <MascotaCard key={mascota.id} mascota={mascota} />
+              ))
+            ) : (
+              <div className="no-results">
+                <p>No se encontraron mascotas con esos filtros.</p>
+                <p>Intenta ajustar tus criterios de búsqueda.</p>
+              </div>
+            )}
+          </div>
+          {totalElements > 0 && (
+            <Paginador
+              currentPage={page}
+              totalPages={totalPages}
+              totalElements={totalElements}
+              size={size}
+              onPageChange={setPage}
+              onSizeChange={(newSize) => {
+                setSize(newSize);
+                setPage(0);
+              }}
+            />
           )}
-        </div>
+        </>
       )}
     </div>
   );
