@@ -1,6 +1,7 @@
 package com.example.pets.petproject.domain.mapper;
 
 
+import com.example.pets.petproject.domain.enums.PetSpecies;
 import com.example.pets.petproject.domain.model.CreatedPetsDTO;
 import com.example.pets.petproject.domain.model.PetsDTO;
 import com.example.pets.petproject.infraestructure.entity.ImageEntity;
@@ -16,7 +17,7 @@ public class PetsMapper {
 
         return  new PetsDTO(
                         p.getPetId(),
-                        p.getOwnerId(),
+                        p.getShelterId(),
                         p.getName(),
                         p.getSpecies(),
                         p.getBreed(),
@@ -34,7 +35,8 @@ public class PetsMapper {
         PetsEntity e = new PetsEntity();
 
         e.setName(dto.name());
-        e.setSpecies(dto.species());
+        e.setSpecies(dto.species() != null ? dto.species() : PetSpecies.DOG);
+        e.setShelterId(dto.shelterId());
         e.setBreed(dto.breed());
         e.setSex(dto.sex());
         e.setColor(dto.color());
@@ -42,6 +44,7 @@ public class PetsMapper {
         e.setDescription(dto.description());
         e.setLocation(dto.location());
         e.setStatus(dto.status());
+        e.setCreatedAt(java.time.LocalDateTime.now());
 
         return e;
     }

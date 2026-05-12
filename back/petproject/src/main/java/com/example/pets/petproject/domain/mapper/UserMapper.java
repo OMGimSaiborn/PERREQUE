@@ -15,7 +15,8 @@ public class UserMapper {
                 u.getUsername(),
                 u.getEmail(),
                 u.getPhone(),
-                u.getRole()
+                u.getRole(),
+                u.getShelterId()
         );
     }
 
@@ -25,7 +26,7 @@ public class UserMapper {
         u.setEmail(dto.email());
         u.setPhone(dto.phone());
         u.setCreatedAt(LocalDateTime.now());
-        u.setRole(UserRole.USER);
+        u.setRole(dto.role() != null ? dto.role() : UserRole.USER);
         return u;
     }
 

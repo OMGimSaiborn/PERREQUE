@@ -158,13 +158,18 @@ export const AuthProvider = ({ children }) => {
         };
       }
 
-      // Normalizamos el usuario para el frontend
+      const roleFromApi =
+        typeof data.role === 'string'
+          ? data.role
+          : data.role?.name || (data.isAdmin ? 'ADMIN' : 'USER');
       const normalizedUser = {
         id: data.id,
-        name: data.username, // el frontend usa `name` para mostrar en el Header/Perfil
+        name: data.username,
         username: data.username,
-        email: email, // Use the email provided in the form
-        isAdmin: data.isAdmin,
+        email,
+        isAdmin: data.isAdmin === true || roleFromApi === 'ADMIN',
+        role: roleFromApi,
+        shelterId: data.shelterId != null ? data.shelterId : null,
       };
 
       // Persistencia
@@ -189,6 +194,7 @@ export const AuthProvider = ({ children }) => {
    * Conecta con el endpoint POST http://localhost:8080/users
    * 
    * @param {Object} userData - Datos del usuario { username, email, phone, password, confirmPassword, role }
+   *   role: 'USER' | 'ADMIN' | 'SHELTER' (mismo POST /users)
    * @returns {Promise<{success: boolean, error?: string}>}
    */
   const register = async (userData) => {
@@ -224,13 +230,16 @@ export const AuthProvider = ({ children }) => {
       // Si el backend devuelve token y datos de usuario, guardarlos
       // Si solo devuelve éxito, el usuario deberá hacer login después
       if (data.token) {
+        const regRole = data.role || userData.role || 'USER';
         const normalizedUser = {
           id: data.id || Date.now(),
           name: data.username || userData.username,
           username: data.username || userData.username,
           email: data.email || userData.email,
           phone: data.phone || userData.phone,
-          isAdmin: data.isAdmin || data.role === 'ADMIN',
+          isAdmin: data.isAdmin === true || regRole === 'ADMIN',
+          role: regRole,
+          shelterId: data.shelterId != null ? data.shelterId : null,
         };
 
         localStorage.setItem('token', data.token);
@@ -466,14 +475,17 @@ export const AuthProvider = ({ children }) => {
       const data = await response.json();
 
       // Normalizar los datos del usuario
+      const roleStr =
+        typeof data.role === 'string' ? data.role : data.role?.name || (data.isAdmin ? 'ADMIN' : 'USER');
       const normalizedUser = {
         id: data.id,
         username: data.username,
-        name: data.username, // Para mantener consistencia con el frontend
+        name: data.username,
         email: data.email,
         phone: data.phone || '',
-        role: data.role,
-        isAdmin: data.role === 'ADMIN',
+        role: roleStr,
+        isAdmin: roleStr === 'ADMIN' || data.isAdmin === true,
+        shelterId: data.shelterId != null ? data.shelterId : null,
       };
 
       return { success: true, user: normalizedUser };
@@ -497,6 +509,8 @@ export const AuthProvider = ({ children }) => {
     updatePassword,
     getUserByEmail,
     isAuthenticated: !!user,
+    /** Administrador o refugio (puede publicar mascotas). */
+    canPublishPets: !!(user && (user.isAdmin === true || user.role === 'SHELTER')),
     loading,
   };
 

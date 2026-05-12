@@ -2,62 +2,57 @@
  * Servicio para manejar las operaciones relacionadas con mascotas
  * 
  * Endpoints:
- * - GET http://localhost:8080/pets?status=LOST|AVAILABLE&size=5 - Listado por estado y tamaño
+ * - GET http://localhost:8080/pets/shelter/{shelterId} - Mascotas de un refugio (listados por refugio)
  * - GET http://localhost:8080/pets/details/{id} - Obtener detalles de una mascota
  * - POST http://localhost:8080/pets - Crear una nueva mascota
- * - PUT http://localhost:8080/pets/updatePet/{id} - Actualizar una mascota
- * - DELETE http://localhost:8080/pets/{id} - Eliminar una mascota
  */
 
 const API_BASE_URL = 'http://localhost:8080';
 
 /**
- * Obtiene mascotas filtradas por estado y cantidad.
- * GET /pets?status=...&size=...
+ * Mascotas asociadas a un refugio: GET /pets/shelter/{shelterId}.
+ * Para sesiones con rol SHELTER, el front debe pasar siempre el shelterId del usuario (no el de la URL).
  *
- * @param {number} [size=9] - Cantidad de elementos
- * @param {string} status - 'AVAILABLE' (adopción) o 'LOST' (perdidas)
- * @returns {Promise<{content?: Array, totalPages?: number, totalElements?: number}>}
+ * @param {number|string} shelterId - ID del refugio a consultar
+ * @returns {Promise<Array>} Lista de mascotas en formato backend
  */
-export const getAllPets = async (size = 9, status) => {
+export const getPetsByShelter = async (shelterId) => {
   try {
     const token = localStorage.getItem('token');
-    const params = new URLSearchParams({
-      status: status,
-      size: String(size),
-    });
-    const response = await fetch(`${API_BASE_URL}/pets?${params}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
-    });
+    const id = String(shelterId).trim();
+    if (!id) {
+      throw new Error('Indica un ID de refugio');
+    }
+    const qs = new URLSearchParams({ page: '0', size: '5000' });
+    const response = await fetch(
+      `${API_BASE_URL}/pets/shelter/${encodeURIComponent(id)}?${qs}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      }
+    );
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(
         errorData.message ||
         errorData.error ||
-        `Error al obtener las mascotas (${response.status})`
+        `Error al obtener mascotas del refugio (${response.status})`
       );
     }
 
     const data = await response.json();
-    return data;
+    if (Array.isArray(data)) return data;
+    if (data.content && Array.isArray(data.content)) return data.content;
+    return [];
   } catch (error) {
-    console.error('Error al obtener mascotas:', error);
+    console.error('Error al obtener mascotas por refugio:', error);
     throw error;
   }
 };
-
-/** Solo mascotas en adopción (AVAILABLE). */
-export const getPetsForAdopcion = (size = 9) =>
-  getAllPets(size, 'AVAILABLE');
-
-/** Solo mascotas perdidas (LOST). */
-export const getPetsLost = (size = 9) =>
-  getAllPets(size, 'LOST');
 
 /**
  * Obtiene los detalles de una mascota por su ID
@@ -166,6 +161,7 @@ export const mapBackendToFrontend = (backendPet) => {
 
   return {
     id: backendPet.petId,
+    shelterId: backendPet.shelterId,
     nombre: backendPet.name,
     tipo: speciesMap[backendPet.species] || backendPet.species,
     raza: backendPet.breed || '',
@@ -219,7 +215,12 @@ export const mapFrontendToBackend = (frontendPet) => {
     age = ageMatch ? parseInt(ageMatch[1]) : null;
   }
 
+  const sid = frontendPet.shelterId;
+  const shelterId =
+    sid === '' || sid === undefined || sid === null ? null : parseInt(String(sid), 10);
+
   return {
+    shelterId: Number.isFinite(shelterId) ? shelterId : null,
     name: frontendPet.nombre,
     species: typeMap[frontendPet.tipoAnimal] || frontendPet.tipoAnimal,
     breed: frontendPet.raza || '',
@@ -232,113 +233,64 @@ export const mapFrontendToBackend = (frontendPet) => {
   };
 };
 
-/**
- * Actualiza una mascota existente
- * 
- * @param {number|string} petId - ID de la mascota
- * @param {Object} petData - Datos actualizados de la mascota
- * @param {string} petData.name - Nombre de la mascota
- * @param {string} petData.breed - Raza
- * @param {string} petData.color - Color
- * @param {number} petData.age - Edad
- * @param {string} petData.description - Descripción
- * @param {string} petData.location - Ubicación
- * @param {string} petData.status - Estado (AVAILABLE, ADOPTED, LOST)
- * @returns {Promise<Object>} Mascota actualizada
- */
-export const updatePet = async (petId, petData) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${API_BASE_URL}/pets/updatePet/${petId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
-      body: JSON.stringify(petData),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.message ||
-        errorData.error ||
-        `Error al actualizar la mascota (${response.status})`
-      );
-    }
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error al actualizar mascota:', error);
-    throw error;
-  }
-};
-
-/**
- * Elimina una mascota
- * 
- * @param {number|string} petId - ID de la mascota
- * @returns {Promise<void>}
- */
-export const deletePet = async (petId) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${API_BASE_URL}/pets/${petId}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.message ||
-        errorData.error ||
-        `Error al eliminar la mascota (${response.status})`
-      );
-    }
-  } catch (error) {
-    console.error('Error al eliminar mascota:', error);
-    throw error;
-  }
-};
-
-/**
- * Convierte los datos del frontend al formato del backend para actualización
- * El endpoint de actualización solo acepta: name, breed, color, age, description, location, status
- * 
- * @param {Object} frontendPet - Mascota del frontend
- * @returns {Object} Mascota en formato del backend para actualización
- */
 export const mapFrontendToBackendUpdate = (frontendPet) => {
-  // Mapear estado: adopcion/perdida/adoptada -> AVAILABLE/LOST/ADOPTED
   const statusMap = {
     adopcion: 'AVAILABLE',
     perdida: 'LOST',
     adoptada: 'ADOPTED',
   };
-
-  // Extraer número de edad si viene como string "2 años"
   let age = frontendPet.age;
   if (typeof age === 'string') {
     const ageMatch = age.match(/(\d+)/);
-    age = ageMatch ? parseInt(ageMatch[1]) : null;
+    age = ageMatch ? parseInt(ageMatch[1], 10) : null;
   } else if (typeof age === 'number') {
     age = age;
   } else {
     age = frontendPet.edadNumero || null;
   }
-
   return {
     name: frontendPet.nombre,
     breed: frontendPet.raza || '',
     color: frontendPet.color || '',
-    age: age,
+    age,
     description: frontendPet.descripcion || '',
     location: frontendPet.ubicacion || '',
     status: statusMap[frontendPet.estado] || frontendPet.estadoBackend || 'AVAILABLE',
   };
+};
+
+export const updatePet = async (petId, petData) => {
+  const token = localStorage.getItem('token');
+  const response = await fetch(`${API_BASE_URL}/pets/updatePet/${petId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
+    },
+    body: JSON.stringify(petData),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      errorData.message || errorData.error || `Error al actualizar la mascota (${response.status})`
+    );
+  }
+  return response.json();
+};
+
+export const deletePet = async (petId) => {
+  const token = localStorage.getItem('token');
+  const response = await fetch(`${API_BASE_URL}/pets/${petId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
+    },
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      errorData.message || errorData.error || `Error al eliminar la mascota (${response.status})`
+    );
+  }
 };

@@ -35,6 +35,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDTO createUser(CreateUserDTO dto) {
 
+        if (dto.password() == null) {
+            throw new IllegalArgumentException("La contraseña no puede ser nula");
+        }
+
         UserEntity entity = UserMapper.toEntity(dto);
 
         // Hash password con BCrypt
@@ -43,8 +47,9 @@ public class UserServiceImpl implements UserService {
 
         entity.setPassword(hashed);
 
-        UserRole roleToAssign = (dto.role() != null) ? dto.role() : UserRole.USER;
-        entity.setRole(roleToAssign);
+        if (dto.role() != null) {
+            entity.setRole(dto.role());
+        }
 
         UserEntity saved = repository.save(entity);
         return UserMapper.toDto(saved);

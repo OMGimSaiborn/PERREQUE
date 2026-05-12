@@ -1,11 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { createPet, mapFrontendToBackend } from '../../services/petsService';
 import './PublicarMascota.css';
 
 const PublicarMascota = () => {
   const navigate = useNavigate();
-  
+  const { user } = useAuth();
+  const isShelterUser = user?.role === 'SHELTER';
+  const userShelterId =
+    user?.shelterId != null && user?.shelterId !== '' ? String(user.shelterId) : '';
+
   const [formData, setFormData] = useState({
     tipo: 'adopcion',
     nombre: '',
@@ -18,8 +23,15 @@ const PublicarMascota = () => {
     descripcion: '',
     contacto: '',
     telefono: '',
-    imagen: null
+    imagen: null,
+    shelterId: '',
   });
+
+  useEffect(() => {
+    if (isShelterUser && userShelterId) {
+      setFormData((prev) => ({ ...prev, shelterId: userShelterId }));
+    }
+  }, [isShelterUser, userShelterId]);
 
   const [errores, setErrores] = useState({});
   const [loading, setLoading] = useState(false);
@@ -69,6 +81,22 @@ const PublicarMascota = () => {
       nuevosErrores.ubicacion = 'La ubicación es requerida';
     }
 
+    if (isShelterUser) {
+      if (!userShelterId) {
+        nuevosErrores.shelterId = 'Tu cuenta refugio no tiene un ID asignado; contacta al administrador';
+      }
+    } else {
+      const sid = (formData.shelterId || '').trim();
+      if (!sid) {
+        nuevosErrores.shelterId = 'Indica el ID del refugio al que se asocia la mascota';
+      } else {
+        const n = parseInt(sid, 10);
+        if (!Number.isFinite(n) || n < 1) {
+          nuevosErrores.shelterId = 'El ID del refugio debe ser un número válido';
+        }
+      }
+    }
+
     // Validar edad si se proporciona
     if (formData.edad && isNaN(parseInt(formData.edad))) {
       nuevosErrores.edad = 'La edad debe ser un número';
@@ -81,7 +109,7 @@ const PublicarMascota = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorGeneral('');
-    
+
     if (!validateForm()) {
       return;
     }
@@ -90,6 +118,10 @@ const PublicarMascota = () => {
 
     try {
       // Preparar datos para el backend
+      const resolvedShelterId = isShelterUser
+        ? parseInt(userShelterId, 10)
+        : parseInt(String(formData.shelterId).trim(), 10);
+
       const petData = {
         nombre: formData.nombre,
         tipoAnimal: formData.tipoAnimal,
@@ -100,7 +132,8 @@ const PublicarMascota = () => {
         edadNumero: formData.edad ? parseInt(formData.edad) : null,
         descripcion: formData.descripcion || '',
         ubicacion: formData.ubicacion,
-        tipo: formData.tipo, // adopcion o perdida
+        tipo: formData.tipo,
+        shelterId: resolvedShelterId,
       };
 
       // Mapear al formato del backend
@@ -109,8 +142,8 @@ const PublicarMascota = () => {
       // Crear la mascota
       await createPet(backendData);
 
-      // Éxito - redirigir
-      navigate(formData.tipo === 'adopcion' ? '/adopcion' : '/mascotas-perdidas');
+      const listPath = formData.tipo === 'adopcion' ? '/adopcion' : '/mascotas-perdidas';
+      navigate(`${listPath}?shelter=${resolvedShelterId}`);
     } catch (error) {
       setErrorGeneral(error.message || 'Error al publicar el anuncio. Por favor, intenta de nuevo.');
       console.error('Error al crear mascota:', error);
@@ -164,8 +197,44 @@ const PublicarMascota = () => {
           </div>
 
           <div className="form-section">
+            <h2>Refugio</h2>
+            {isShelterUser ? (
+              <div className="form-group">
+                <label>Refugio asociado</label>
+                <input
+                  type="text"
+                  readOnly
+                  disabled={loading}
+                  value={userShelterId ? `ID ${userShelterId} (tu refugio)` : 'Sin ID asignado'}
+                  className="input-readonly"
+                />
+                {errores.shelterId && <span className="error-message">{errores.shelterId}</span>}
+                <small>Las mascotas que publicas quedan vinculadas a tu refugio.</small>
+              </div>
+            ) : (
+              <div className="form-group">
+                <label htmlFor="shelterId">ID del refugio *</label>
+                <input
+                  type="number"
+                  id="shelterId"
+                  name="shelterId"
+                  min="1"
+                  step="1"
+                  value={formData.shelterId}
+                  onChange={handleChange}
+                  className={errores.shelterId ? 'error' : ''}
+                  placeholder="Ej: 1"
+                  disabled={loading}
+                />
+                {errores.shelterId && <span className="error-message">{errores.shelterId}</span>}
+                <small>La mascota quedará afiliada a este refugio en el sistema.</small>
+              </div>
+            )}
+          </div>
+
+          <div className="form-section">
             <h2>Información de la Mascota</h2>
-            
+
             <div className="form-group">
               <label htmlFor="nombre">Nombre *</label>
               <input
@@ -305,16 +374,16 @@ const PublicarMascota = () => {
           </div>
 
           <div className="form-actions">
-            <button 
-              type="button" 
-              onClick={() => navigate(-1)} 
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
               className="btn btn-secondary"
               disabled={loading}
             >
               Cancelar
             </button>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="btn btn-primary"
               disabled={loading}
             >

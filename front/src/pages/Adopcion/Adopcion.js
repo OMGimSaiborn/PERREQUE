@@ -1,17 +1,26 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import MascotaCard from '../../components/MascotaCard/MascotaCard';
-import Paginador from '../../components/Paginador/Paginador';
-import { getPetsForAdopcion, mapBackendToFrontend } from '../../services/petsService';
+import BuscarPorRefugio from '../../components/BuscarPorRefugio/BuscarPorRefugio';
+import { useAuth } from '../../context/AuthContext';
+import { getPetsByShelter, mapBackendToFrontend } from '../../services/petsService';
 import './Adopcion.css';
 
-const SIZE_FETCH_ALL = 9999;
-
 const Adopcion = () => {
+  const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeShelterId = searchParams.get('shelter') || '';
+  const isShelterAccount = user?.role === 'SHELTER';
+  const userShelterId =
+    user?.shelterId != null && user?.shelterId !== '' ? String(user.shelterId) : null;
+  const shelterProfileIncomplete = isShelterAccount && !userShelterId;
+  /** Refugio cuyo listado se pide al API: SHELTER siempre el suyo; otros roles usan la URL. */
+  const shelterIdForApi =
+    isShelterAccount && userShelterId ? userShelterId : activeShelterId.trim();
+
   const [mascotas, setMascotas] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [page, setPage] = useState(0);
-  const [size, setSize] = useState(9);
 
   const [filtros, setFiltros] = useState({
     tipo: '',
@@ -19,43 +28,76 @@ const Adopcion = () => {
     busqueda: ''
   });
 
-  const loadPets = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      const response = await getPetsForAdopcion(SIZE_FETCH_ALL);
-      const content = Array.isArray(response) ? response : (response.content || []);
-      setMascotas(content.map(pet => mapBackendToFrontend(pet)));
-    } catch (err) {
-      setError(err.message || 'Error al cargar las mascotas');
-      console.error('Error al cargar mascotas:', err);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (!isShelterAccount || !userShelterId) return;
+    if (activeShelterId !== userShelterId) {
+      setSearchParams({ shelter: userShelterId }, { replace: true });
     }
-  };
+  }, [isShelterAccount, userShelterId, activeShelterId, setSearchParams]);
 
   useEffect(() => {
-    loadPets();
-  }, []);
+    let cancelled = false;
 
-  const mascotasFiltradas = mascotas.filter(mascota => {
+    const loadPets = async () => {
+      if (shelterProfileIncomplete) {
+        if (!cancelled) {
+          setMascotas([]);
+          setError('');
+          setLoading(false);
+        }
+        return;
+      }
+      if (!shelterIdForApi) {
+        if (!cancelled) {
+          setMascotas([]);
+          setError('');
+          setLoading(false);
+        }
+        return;
+      }
+      try {
+        setLoading(true);
+        setError('');
+        const raw = await getPetsByShelter(shelterIdForApi);
+        const availablePets = raw
+          .filter((pet) => pet.status === 'AVAILABLE')
+          .map((pet) => mapBackendToFrontend(pet));
+        if (!cancelled) setMascotas(availablePets);
+      } catch (err) {
+        if (!cancelled) {
+          setError(err.message || 'Error al cargar las mascotas');
+          console.error('Error al cargar mascotas:', err);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    loadPets();
+    return () => {
+      cancelled = true;
+    };
+  }, [shelterIdForApi, shelterProfileIncomplete]);
+
+  const applyShelter = (id) => {
+    setSearchParams(id ? { shelter: id } : {});
+  };
+
+  const clearShelter = () => {
+    setSearchParams({});
+  };
+
+  const mascotasFiltradas = mascotas.filter((mascota) => {
     const coincideTipo = !filtros.tipo || mascota.tipo.toLowerCase() === filtros.tipo.toLowerCase();
-    const coincideUbicacion = !filtros.ubicacion || mascota.ubicacion.toLowerCase().includes(filtros.ubicacion.toLowerCase());
-    const coincideBusqueda = !filtros.busqueda || 
+    const coincideUbicacion =
+      !filtros.ubicacion || mascota.ubicacion.toLowerCase().includes(filtros.ubicacion.toLowerCase());
+    const coincideBusqueda =
+      !filtros.busqueda ||
       mascota.nombre.toLowerCase().includes(filtros.busqueda.toLowerCase()) ||
       (mascota.raza && mascota.raza.toLowerCase().includes(filtros.busqueda.toLowerCase()));
 
     return coincideTipo && coincideUbicacion && coincideBusqueda;
   });
-
-  const totalElements = mascotasFiltradas.length;
-  const totalPages = Math.max(1, Math.ceil(totalElements / size));
-  const pageClamped = Math.min(page, totalPages - 1);
-  const mascotasPagina = mascotasFiltradas.slice(pageClamped * size, pageClamped * size + size);
-
-  useEffect(() => {
-    if (page >= totalPages && totalPages > 0) setPage(0);
-  }, [totalPages]);
 
   return (
     <div className="adopcion-page">
@@ -65,6 +107,22 @@ const Adopcion = () => {
       </div>
 
       <div className="filtros-section">
+        {shelterProfileIncomplete && (
+          <div className="error-alert" style={{ marginBottom: '1rem' }}>
+            <span className="error-icon">⚠️</span>
+            <span>
+              Tu cuenta es de refugio pero no tiene un ID de refugio asignado. Pide a un administrador que
+              actualice tu usuario en la base de datos.
+            </span>
+          </div>
+        )}
+        <BuscarPorRefugio
+          lockedShelterId={isShelterAccount && userShelterId ? userShelterId : undefined}
+          activeShelterId={isShelterAccount && userShelterId ? userShelterId : activeShelterId}
+          onApply={applyShelter}
+          onClear={clearShelter}
+          disabled={loading || shelterProfileIncomplete}
+        />
         <div className="filtros-container">
           <input
             type="text"
@@ -73,7 +131,7 @@ const Adopcion = () => {
             value={filtros.busqueda}
             onChange={(e) => setFiltros({ ...filtros, busqueda: e.target.value })}
           />
-          
+
           <select
             className="select-filtro"
             value={filtros.tipo}
@@ -84,7 +142,7 @@ const Adopcion = () => {
             <option value="gato">Gato</option>
             <option value="otro">Otro</option>
           </select>
-          
+
           <input
             type="text"
             placeholder="Ubicación..."
@@ -104,38 +162,28 @@ const Adopcion = () => {
           <span className="error-icon">⚠️</span>
           <span>{error}</span>
         </div>
+      ) : shelterProfileIncomplete ? (
+        <div className="no-results no-results-hint">
+          <p>No se puede cargar el listado hasta que tu usuario tenga un refugio asociado.</p>
+        </div>
+      ) : !shelterIdForApi ? (
+        <div className="no-results no-results-hint">
+          <p>Indica el ID del refugio arriba y pulsa <strong>Buscar</strong> para ver las mascotas en adopción de ese refugio.</p>
+        </div>
       ) : (
-        <>
-          <div className="mascotas-grid">
-            {mascotasPagina.length > 0 ? (
-              mascotasPagina.map(mascota => (
-                <MascotaCard key={mascota.id} mascota={mascota} />
-              ))
-            ) : (
-              <div className="no-results">
-                <p>No se encontraron mascotas con esos filtros.</p>
-                <p>Intenta ajustar tus criterios de búsqueda.</p>
-              </div>
-            )}
-          </div>
-          {totalElements > 0 && (
-            <Paginador
-              currentPage={page}
-              totalPages={totalPages}
-              totalElements={totalElements}
-              size={size}
-              onPageChange={setPage}
-              onSizeChange={(newSize) => {
-                setSize(newSize);
-                setPage(0);
-              }}
-            />
+        <div className="mascotas-grid">
+          {mascotasFiltradas.length > 0 ? (
+            mascotasFiltradas.map((mascota) => <MascotaCard key={mascota.id} mascota={mascota} />)
+          ) : (
+            <div className="no-results">
+              <p>No se encontraron mascotas con esos filtros.</p>
+              <p>Intenta ajustar tus criterios de búsqueda.</p>
+            </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );
 };
 
 export default Adopcion;
-

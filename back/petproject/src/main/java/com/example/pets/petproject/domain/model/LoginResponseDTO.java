@@ -6,5 +6,7 @@ public record LoginResponseDTO(
         String username,
         Boolean isAdmin,
         Integer id,
-        String token // Aquí va el JWT
+        String token, // JWT
+        String role,
+        Integer shelterId // solo usuarios SHELTER; null en otros
 ) {}

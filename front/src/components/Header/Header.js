@@ -6,7 +6,7 @@ import './Header.css';
 const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, user, logout, canPublishPets } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
 
   const handleLogout = () => {
@@ -27,32 +27,32 @@ const Header = () => {
           <span className="logo-icon">🐾</span>
           <span className="logo-text">Perreque</span>
         </Link>
-        
+
         <nav className="navigation">
           {isAuthenticated && (
             <>
-              <Link 
-                to="/home" 
+              <Link
+                to="/home"
                 className={`nav-link ${location.pathname === '/home' ? 'active' : ''}`}
               >
                 Inicio
               </Link>
-              <Link 
-                to="/adopcion" 
+              <Link
+                to="/adopcion"
                 className={`nav-link ${location.pathname === '/adopcion' ? 'active' : ''}`}
               >
                 Adopción
               </Link>
-              <Link 
-                to="/mascotas-perdidas" 
+              <Link
+                to="/mascotas-perdidas"
                 className={`nav-link ${location.pathname === '/mascotas-perdidas' ? 'active' : ''}`}
               >
                 Mascotas Perdidas
               </Link>
-              {/* Solo mostrar "Publicar Anuncio" si el usuario es administrador */}
-              {user?.isAdmin && (
-                <Link 
-                  to="/publicar" 
+              {/* Administrador o refugio (SHELTER) pueden publicar */}
+              {canPublishPets && (
+                <Link
+                  to="/publicar"
                   className={`nav-link nav-link-primary ${location.pathname === '/publicar' ? 'active' : ''}`}
                 >
                   Publicar Anuncio
@@ -63,7 +63,7 @@ const Header = () => {
 
           {isAuthenticated ? (
             <div className="user-menu">
-              <button 
+              <button
                 className="user-menu-button"
                 onClick={() => setShowMenu(!showMenu)}
                 aria-label="Menú de usuario"
@@ -74,18 +74,18 @@ const Header = () => {
                 <span className="user-name">{user?.name || 'Usuario'}</span>
                 <span className="menu-arrow">▼</span>
               </button>
-              
+
               {showMenu && (
                 <div className="user-dropdown">
-                  <Link 
-                    to="/perfil" 
+                  <Link
+                    to="/perfil"
                     className="dropdown-item"
                     onClick={() => setShowMenu(false)}
                   >
                     Mi Perfil
                   </Link>
-                  <Link 
-                    to="/mis-anuncios" 
+                  <Link
+                    to="/mis-anuncios"
                     className="dropdown-item"
                     onClick={() => setShowMenu(false)}
                   >
@@ -95,8 +95,8 @@ const Header = () => {
                   {user?.isAdmin && (
                     <>
                       <div className="dropdown-divider"></div>
-                      <Link 
-                        to="/crear-usuario" 
+                      <Link
+                        to="/crear-usuario"
                         className="dropdown-item"
                         onClick={() => setShowMenu(false)}
                       >
@@ -105,7 +105,7 @@ const Header = () => {
                     </>
                   )}
                   <div className="dropdown-divider"></div>
-                  <button 
+                  <button
                     className="dropdown-item dropdown-item-danger"
                     onClick={handleLogout}
                   >

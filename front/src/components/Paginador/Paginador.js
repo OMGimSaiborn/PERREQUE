@@ -1,15 +1,6 @@
 import React from 'react';
 import './Paginador.css';
 
-/**
- * Paginador reutilizable para listas con page/size.
- * @param {number} currentPage - Página actual (0-based)
- * @param {number} totalPages - Total de páginas
- * @param {number} totalElements - Total de elementos
- * @param {number} size - Elementos por página
- * @param {function(number)} onPageChange - Callback al cambiar de página (recibe nuevo page)
- * @param {function(number)} onSizeChange - Callback al cambiar tamaño (recibe nuevo size)
- */
 const Paginador = ({
   currentPage,
   totalPages,

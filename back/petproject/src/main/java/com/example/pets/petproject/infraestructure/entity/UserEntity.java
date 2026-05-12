@@ -1,13 +1,10 @@
 package com.example.pets.petproject.infraestructure.entity;
 
 import com.example.pets.petproject.domain.enums.UserRole;
-
-import com.example.pets.petproject.domain.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.JdbcType;
-import org.hibernate.annotations.Type;
 import org.hibernate.dialect.type.PostgreSQLEnumJdbcType;
 
 import java.time.LocalDateTime;
@@ -40,6 +37,10 @@ public class UserEntity {
     @JdbcType(PostgreSQLEnumJdbcType.class)
     @Column(nullable = false, columnDefinition = "user_role")
     private UserRole role;
+
+    /** Refugio asociado; obligatorio para rol SHELTER en el negocio. */
+    @Column(name = "shelter_id")
+    private Integer shelterId;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();

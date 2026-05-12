@@ -24,8 +24,8 @@ public class PetsEntity {
     @Column(name = "pet_id")
     private Integer petId;
 
-    @Column(nullable = true)
-    private Integer ownerId;
+    @Column(name = "shelter_id")
+    private Integer shelterId;
 
     @Column(nullable = false)
     private String name;

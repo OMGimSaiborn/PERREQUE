@@ -6,14 +6,14 @@ import './CrearUsuario.css';
 const CrearUsuario = () => {
   const navigate = useNavigate();
   const { register } = useAuth();
-  
+
   const [formData, setFormData] = useState({
     username: '',
     email: '',
     phone: '',
     password: '',
     confirmPassword: '',
-    role: 'USER', // Por defecto USER, puede ser USER o ADMIN
+    role: 'USER', // USER | ADMIN | SHELTER (mismo POST /users que el registro)
   });
 
   const [errores, setErrores] = useState({});
@@ -97,7 +97,13 @@ const CrearUsuario = () => {
     setLoading(false);
 
     if (result.success) {
-      setSuccessMessage(`Usuario ${formData.role === 'ADMIN' ? 'administrador' : 'normal'} creado exitosamente`);
+      const tipoCreado =
+        formData.role === 'ADMIN'
+          ? 'administrador'
+          : formData.role === 'SHELTER'
+            ? 'refugio'
+            : 'normal';
+      setSuccessMessage(`Usuario ${tipoCreado} creado exitosamente`);
       // Limpiar el formulario después de 2 segundos
       setTimeout(() => {
         setFormData({
@@ -120,7 +126,10 @@ const CrearUsuario = () => {
       <div className="crear-usuario-container">
         <div className="crear-usuario-header">
           <h1>Crear Nuevo Usuario</h1>
-          <p>Como administrador, puedes crear nuevos usuarios y definir su rol</p>
+          <p>
+            Usa el mismo alta que el registro público: se envían nombre de usuario, email, teléfono, contraseña y rol.
+            Para un refugio, elige «Refugio» (rol <strong>SHELTER</strong> en el servidor).
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="crear-usuario-form">
@@ -225,16 +234,17 @@ const CrearUsuario = () => {
               disabled={loading}
               className="select-role"
             >
-              <option value="USER">Usuario Normal</option>
+              <option value="USER">Usuario normal</option>
               <option value="ADMIN">Administrador</option>
+              <option value="SHELTER">Refugio</option>
             </select>
             <small className="role-hint">
-              Selecciona el rol que tendrá el nuevo usuario en el sistema
+              El refugio se crea con <code>role: &quot;SHELTER&quot;</code> en el mismo endpoint que el resto de usuarios.
             </small>
           </div>
 
           <div className="form-actions">
-            <button 
+            <button
               type="button"
               onClick={() => navigate('/home')}
               className="btn btn-secondary"
@@ -242,8 +252,8 @@ const CrearUsuario = () => {
             >
               Cancelar
             </button>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="btn btn-primary btn-submit"
               disabled={loading}
             >

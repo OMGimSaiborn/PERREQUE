@@ -7,6 +7,7 @@ import com.example.pets.petproject.domain.enums.PetStatus;
 import java.time.LocalDateTime;
 
 public record CreatedPetsDTO(
+        Integer shelterId,
     String name,
     PetSpecies species,
     String breed,

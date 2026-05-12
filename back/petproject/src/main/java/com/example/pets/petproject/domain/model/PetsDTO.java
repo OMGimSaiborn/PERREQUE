@@ -10,7 +10,7 @@ import java.util.List;
 
 public record PetsDTO (
     Integer petId,
-    Integer ownerId,
+    Integer shelterId,
     String name,
     PetSpecies species,
     String breed,

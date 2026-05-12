@@ -5,6 +5,7 @@ import Header from './components/Header/Header';
 import Footer from './components/Footer/Footer';
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
 import ProtectedAdminRoute from './components/ProtectedAdminRoute/ProtectedAdminRoute';
+import ProtectedPublisherRoute from './components/ProtectedPublisherRoute/ProtectedPublisherRoute';
 import PublicRoute from './components/PublicRoute/PublicRoute';
 import Home from './pages/Home/Home';
 import Adopcion from './pages/Adopcion/Adopcion';
@@ -107,9 +108,9 @@ function App() {
               <Route 
                 path="/publicar" 
                 element={
-                  <ProtectedAdminRoute>
+                  <ProtectedPublisherRoute>
                     <PublicarMascota />
-                  </ProtectedAdminRoute>
+                  </ProtectedPublisherRoute>
                 } 
               />
               <Route 

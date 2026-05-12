@@ -29,7 +29,7 @@ public class LoginServiceImpl implements LoginService {
                 .orElse(null);
 
         if (user == null) {
-            return new LoginResponseDTO(false, USER_NOT_FOUND, null, null, null, null);
+            return new LoginResponseDTO(false, USER_NOT_FOUND, null, null, null, null, null, null);
         }
 
         boolean matches = BCrypt.verifyer()
@@ -37,7 +37,7 @@ public class LoginServiceImpl implements LoginService {
                 .verified;
 
         if (!matches) {
-            return new LoginResponseDTO(false, PASSWORD_NOT_FOUND, null, null, null, null);
+            return new LoginResponseDTO(false, PASSWORD_NOT_FOUND, null, null, null, null, null, null);
         }
 
         String token = jwtUtil.generateToken(
@@ -52,7 +52,9 @@ public class LoginServiceImpl implements LoginService {
                 user.getUsername(),
                 user.getRole() == UserRole.ADMIN,
                 user.getId(),
-                token
+                token,
+                user.getRole().name(),
+                user.getShelterId()
         );
     }
 }

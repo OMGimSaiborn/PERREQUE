@@ -1,6 +1,5 @@
 package com.example.pets.petproject.domain.core;
 
-import com.example.pets.petproject.domain.enums.PetStatus;
 import com.example.pets.petproject.domain.mapper.PetsMapper;
 import com.example.pets.petproject.domain.mapper.UserMapper;
 import com.example.pets.petproject.domain.model.CreatedPetsDTO;
@@ -32,14 +31,12 @@ public class PetsServiceImpl implements PetsService {
     }
 
     @Override
-    public Page<PetsDTO> getAllPets(int page, int size, PetStatus status) {
+    public Page<PetsDTO> getAllPets(int page, int size) {
+
         Pageable pageable = PageRequest.of(page, size);
 
-        if (status != null) {
-            return repository.findByStatus(status, pageable).map(PetsMapper::toDto);
-        }
-
-        return repository.findAll(pageable).map(PetsMapper::toDto);
+        return repository.findAll(pageable)
+                .map(PetsMapper::toDto);
     }
 
     @Override
@@ -86,6 +83,13 @@ public class PetsServiceImpl implements PetsService {
 
         PetsEntity updated = repository.save(existing);
         return PetsMapper.toDto(updated);
+    }
+
+    @Override
+    public Page<PetsDTO> getPetsByShelter(Integer shelterId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return repository.findByShelterId(shelterId, pageable)
+                .map(PetsMapper::toDto);
     }
 
 

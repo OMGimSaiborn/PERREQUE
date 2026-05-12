@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import './Home.css';
 
 const Home = () => {
-  const { user } = useAuth();
+  const { user, canPublishPets } = useAuth();
   
   return (
     <div className="home">
@@ -58,7 +58,7 @@ const Home = () => {
       </section>
 
       {/* Solo mostrar sección de publicar si el usuario es administrador */}
-      {user?.isAdmin && (
+      {canPublishPets && (
         <section className="cta-section">
           <div className="cta-content">
             <h2>¿Tienes una mascota para dar en adopción?</h2>

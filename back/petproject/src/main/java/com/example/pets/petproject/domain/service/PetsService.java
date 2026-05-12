@@ -2,14 +2,13 @@ package com.example.pets.petproject.domain.service;
 
 import com.example.pets.petproject.domain.model.CreatedPetsDTO;
 import com.example.pets.petproject.domain.model.PetsDTO;
-import com.example.pets.petproject.domain.enums.PetStatus;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
 
 public interface PetsService {
 
-    Page<PetsDTO> getAllPets(int page, int size, PetStatus status);
+    Page<PetsDTO> getAllPets(int page, int size);
 
     PetsDTO getPetById(Integer id);
 
@@ -18,6 +17,8 @@ public interface PetsService {
     PetsDTO updatePet(Integer id, PetsDTO dto);
 
     void deleteById(Integer id);
+
+    Page<PetsDTO> getPetsByShelter(Integer shelterId, int page, int size);
 
 
 }

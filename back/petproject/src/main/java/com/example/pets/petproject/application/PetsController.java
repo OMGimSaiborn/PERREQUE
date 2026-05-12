@@ -1,6 +1,5 @@
 package com.example.pets.petproject.application;
 
-import com.example.pets.petproject.domain.enums.PetStatus;
 import com.example.pets.petproject.domain.model.CreatedPetsDTO;
 import com.example.pets.petproject.domain.model.PetsDTO;
 import com.example.pets.petproject.domain.model.UserDTO;
@@ -8,6 +7,7 @@ import com.example.pets.petproject.domain.port.PetsRepositoryDB;
 import com.example.pets.petproject.domain.service.PetsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,10 +23,9 @@ public class PetsController {
     @GetMapping
     public Page<PetsDTO> getAllPets(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) PetStatus status
+            @RequestParam(defaultValue = "10") int size
     ) {
-        return petsService.getAllPets(page, size, status);
+        return petsService.getAllPets(page, size);
     }
 
     @GetMapping("/details/{id}")
@@ -47,5 +46,14 @@ public class PetsController {
     @DeleteMapping("/{id}")
     public void deletePet(@PathVariable Integer id) {
         petsService.deleteById(id);
+    }
+
+    @GetMapping("/shelter/{shelterId}")
+    public Page<PetsDTO> getPetsByShelter(
+            @PathVariable Integer shelterId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return petsService.getPetsByShelter(shelterId, page, size);
     }
 }
