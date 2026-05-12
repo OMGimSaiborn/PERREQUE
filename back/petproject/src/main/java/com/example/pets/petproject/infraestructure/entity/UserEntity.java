@@ -38,9 +38,6 @@ public class UserEntity {
     @Column(nullable = false, columnDefinition = "user_role")
     private UserRole role;
 
-    /** Refugio asociado; obligatorio para rol SHELTER en el negocio. */
-    @Column(name = "shelter_id")
-    private Integer shelterId;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();

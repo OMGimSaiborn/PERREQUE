@@ -7,6 +7,5 @@ public record LoginResponseDTO(
         Boolean isAdmin,
         Integer id,
         String token, // JWT
-        String role,
-        Integer shelterId // solo usuarios SHELTER; null en otros
+        String role
 ) {}

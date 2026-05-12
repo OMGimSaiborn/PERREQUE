@@ -15,8 +15,7 @@ public class UserMapper {
                 u.getUsername(),
                 u.getEmail(),
                 u.getPhone(),
-                u.getRole(),
-                u.getShelterId()
+                u.getRole()
         );
     }
 

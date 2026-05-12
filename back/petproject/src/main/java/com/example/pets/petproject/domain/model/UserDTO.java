@@ -7,8 +7,7 @@ public record UserDTO (
         String username,
         String email,
         String phone,
-        UserRole role,
-        Integer shelterId
+        UserRole role
 ) {
 
 }
